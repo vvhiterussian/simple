@@ -21,6 +21,10 @@ function connect() {
         stompClient.subscribe('/auth', function (response) {
             showAuthResponse(JSON.parse(response.body).content);
         });
+
+        stompClient.subscribe('/sdef', function (response) {
+            showSecurityDefinitions(JSON.parse(response.body).isins);
+        });
     });
 }
 
@@ -36,7 +40,15 @@ function sendAuth() {
     stompClient.send("/app/auth", {}, JSON.stringify({'name': $("#name").val(), 'token': $("#token").val()}));
 }
 
+function sendSecurityDefinitionsResponse() {
+    stompClient.send("/app/sdef", {});
+}
+
 function showAuthResponse(message) {
+    $("#userinfo").append("<tr><td>" + message + "</td></tr>");
+}
+
+function showSecurityDefinitions(message) {
     $("#userinfo").append("<tr><td>" + message + "</td></tr>");
 }
 
@@ -47,4 +59,5 @@ $(function () {
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendAuth(); });
+    $( "#get-securities" ).click(function() { sendSecurityDefinitionsResponse(); });
 });
