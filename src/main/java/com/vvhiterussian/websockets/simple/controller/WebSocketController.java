@@ -12,23 +12,35 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.session.web.socket.events.SessionConnectEvent;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class WebSocketController {
 
+    private static final String SEC_DEF_TOPIC = "/sdef";
+
     private final WebSocketObj webSocketObj;
     private final AuthService authService;
     private final SecurityDefinitionService securityDefinitionService;
+    private final SimpMessagingTemplate brokerMessagingTemplate;
 
     private String sessionId;
+    private Map<String, ScheduledExecutorService> publishingServices = new HashMap<>();
 
     @MessageMapping("/auth")
     @SendTo("/auth")
@@ -39,15 +51,39 @@ public class WebSocketController {
         return new AuthResponse(request.getName() + (isAuthenticated ? ", you are authenticated!" : ", password is incorrect"));
     }
 
-    @MessageMapping("/sdef")
-    @SendTo("/sdef")
-    public SecurityDefinitionResponse securityDefinitionHandler() {
+    @MessageMapping(SEC_DEF_TOPIC)
+    @SendTo(SEC_DEF_TOPIC)
+    public SecurityDefinitionResponse securityDefinitionRequestHandler() {
         if (webSocketObj.isAuth()) {
             return new SecurityDefinitionResponse(securityDefinitionService.getSecurityDefinitions());
         }
         return new SecurityDefinitionResponse(Collections.emptyList());
     }
 
+    @EventListener(SessionSubscribeEvent.class)
+    public void subscribeHandler(SessionSubscribeEvent event) {
+        SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.wrap(event.getMessage());
+//        String simpDestination = headers.get("simpDestination").toString();
+//        String simpSessionId = headers.get("simpSessionId").toString();
+//        String simpSubscriptionId = headers.get("simpSubscriptionId").toString();
+        if (SEC_DEF_TOPIC.equals(headers.getDestination())) {
+            ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+            publishingServices.put(headers.getSubscriptionId(), service);
+            service.scheduleAtFixedRate(() ->
+                            brokerMessagingTemplate.convertAndSend(SEC_DEF_TOPIC, new SecurityDefinitionResponse(securityDefinitionService.getSecurityDefinitions())),
+                    2, 2, TimeUnit.SECONDS);
+        }
+        log.debug("Subscribe {}", headers.getSubscriptionId());
+    }
+
+    @EventListener(SessionUnsubscribeEvent.class)
+    public void unsubscribeHandler(SessionUnsubscribeEvent event) {
+        SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.wrap(event.getMessage());
+        if (publishingServices.containsKey(headers.getSubscriptionId())) {
+            publishingServices.get(headers.getSubscriptionId()).shutdown();
+        }
+        log.debug("Unsubscribe {} ", headers.getSubscriptionId());
+    }
     @EventListener(SessionConnectEvent.class)
     public void connectHandler(SessionConnectEvent event) {
         String sessionId = event.getWebSocketSession().getId();

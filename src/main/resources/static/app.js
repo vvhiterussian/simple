@@ -1,4 +1,5 @@
 var stompClient = null;
+var secDefSubscription = null;
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -21,10 +22,6 @@ function connect() {
         stompClient.subscribe('/auth', function (response) {
             showAuthResponse(JSON.parse(response.body).content);
         });
-
-        stompClient.subscribe('/sdef', function (response) {
-            showSecurityDefinitions(JSON.parse(response.body).isins);
-        });
     });
 }
 
@@ -40,8 +37,16 @@ function sendAuth() {
     stompClient.send("/app/auth", {}, JSON.stringify({'name': $("#name").val(), 'token': $("#token").val()}));
 }
 
-function sendSecurityDefinitionsResponse() {
+function subscribeOnSecurityDefinitions() {
+    secDefSubscription = stompClient.subscribe('/sdef', function (response) {
+        showSecurityDefinitions(JSON.parse(response.body).isins);
+    });
+
     stompClient.send("/app/sdef", {});
+}
+
+function unsubscribeOnSecurityDefinitions() {
+    secDefSubscription.unsubscribe();
 }
 
 function showAuthResponse(message) {
@@ -59,5 +64,6 @@ $(function () {
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendAuth(); });
-    $( "#get-securities" ).click(function() { sendSecurityDefinitionsResponse(); });
+    $( "#sub-sdef" ).click(function() { subscribeOnSecurityDefinitions(); });
+    $( "#unsub-sdef" ).click(function() { unsubscribeOnSecurityDefinitions(); });
 });
