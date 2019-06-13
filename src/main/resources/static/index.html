@@ -26,17 +26,29 @@
             </form>
         </div>
         <div class="col-md-6">
+            <!--<form class="form-inline">-->
+                <!--<div class="form-group">-->
+                    <!--<label for="name">What is your name?</label>-->
+                    <!--<input type="text" id="name" class="form-control" placeholder="Your name here...">-->
+                    <!--<label for="token">Token</label>-->
+                    <!--<input type="text" id="token" class="form-control">-->
+                <!--</div>-->
+                <!--<button id="send" class="btn btn-default" type="submit">Send Auth Request</button>-->
+                <!--<button id="sub-sdef" class="btn btn-default" type="submit">Subscribe on securities</button>-->
+                <!--<button id="unsub-sdef" class="btn btn-default" type="submit">Stop</button>-->
+            <!--</form>-->
             <form class="form-inline">
-                <div class="form-group">
-                    <label for="name">What is your name?</label>
-                    <input type="text" id="name" class="form-control" placeholder="Your name here...">
-                    <label for="token">Token</label>
-                    <input type="text" id="token" class="form-control">
-                </div>
-                <button id="send" class="btn btn-default" type="submit">Send Auth Request</button>
-                <button id="sub-sdef" class="btn btn-default" type="submit">Subscribe on securities</button>
-                <button id="unsub-sdef" class="btn btn-default" type="submit">Stop</button>
-            </form>
+            <div class="form-group">
+                <label for="id-source">IDSource</label>
+                <input type="text" id="id-source" class="form-control">
+                <label for="security-id">Security ID</label>
+                <input type="text" id="security-id" class="form-control">
+                <label for="ex-destination">Ex Destination</label>
+                <input type="text" id="ex-destination" class="form-control">
+            </div>
+            <button id="sub" class="btn btn-default" type="submit">Subscribe on market data</button>
+            <button id="unsub" class="btn btn-default" type="submit">Stop subscription</button>
+        </form>
         </div>
     </div>
     <div class="row">

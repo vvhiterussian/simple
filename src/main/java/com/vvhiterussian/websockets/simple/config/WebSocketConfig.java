@@ -20,9 +20,9 @@ public class WebSocketConfig extends AbstractSessionWebSocketMessageBrokerConfig
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/auth", "/sdef")
+        config.enableSimpleBroker("/auth", "/market-data")
                 .setTaskScheduler(heartbeatsTaskScheduler());
-        config.setApplicationDestinationPrefixes("/app");
+        config.setApplicationDestinationPrefixes("/");
     }
 
     @Override

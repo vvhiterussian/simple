@@ -1,6 +1,8 @@
 var stompClient = null;
 var secDefSubscription = null;
 
+var subscriptions = {};
+
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
@@ -42,6 +44,10 @@ function subscribeOnSecurityDefinitions() {
         showSecurityDefinitions(JSON.parse(response.body).isins);
     });
 
+    stompClient.subscribe('/user/sdef', function (response) {
+        showSecurityDefinitionsPrivate(JSON.parse(response.body).isins);
+    });
+
     stompClient.send("/app/sdef", {});
 }
 
@@ -57,6 +63,30 @@ function showSecurityDefinitions(message) {
     $("#userinfo").append("<tr><td>" + message + "</td></tr>");
 }
 
+function showSecurityDefinitionsPrivate(message) {
+    $("#userinfo").append("<tr><td>Private: " + message + "</td></tr>");
+}
+
+
+
+function subscribeOnMarketData(idSource, securityId, exDestination){
+    var subscriptionKey = '/market-data/' + idSource + '/' + securityId + '/' + exDestination;
+    subscriptions[subscriptionKey] = stompClient.subscribe(subscriptionKey, function (response) {
+        showMarketDataUpdate(subscriptionKey, response.body);
+    });
+}
+
+function unsubscribeFromMarketData(idSource, securityId, exDestination){
+    var subscriptionKey = '/market-data/' + idSource + '/' + securityId + '/' + exDestination;
+    if (subscriptions.hasOwnProperty(subscriptionKey)) {
+        subscriptions[subscriptionKey].unsubscribe();
+    }
+}
+
+function showMarketDataUpdate(source, message) {
+    $("#userinfo").append("<tr><td>A message from: " + source + ": " + message + "</td></tr>");
+}
+
 $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
@@ -64,6 +94,9 @@ $(function () {
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendAuth(); });
-    $( "#sub-sdef" ).click(function() { subscribeOnSecurityDefinitions(); });
+    $( "#sub-sdef" ).click(function() { subscribeOnMarketData(); });
     $( "#unsub-sdef" ).click(function() { unsubscribeOnSecurityDefinitions(); });
+
+    $( "#sub" ).click(function() { subscribeOnMarketData($("#id-source").val(), $("#security-id").val(), $("#ex-destination").val()); });
+    $( "#unsub" ).click(function() { unsubscribeFromMarketData($("#id-source").val(), $("#security-id").val(), $("#ex-destination").val()); });
 });
