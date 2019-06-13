@@ -30,6 +30,8 @@ public class SubscriptionService {
         subscriptions.get(subscription.getSessionId()).add(subscription);
 
         destinations.add(subscription.getDestination());
+        // тут хэндлится маркет дата
+        // включи эту бумажку - у себя все регулируй, пропушено или нет
 
         if (!broadcast.get()) {
             broadcast.set(true);
@@ -42,6 +44,8 @@ public class SubscriptionService {
 
             if (isLastSubscriptionForDestination(subscription.getDestination())) {
                 destinations.remove(subscription.getDestination());
+                // тут хэндлится маркет дата
+                // выключи эту бумажку
             }
         }
     }
@@ -59,6 +63,9 @@ public class SubscriptionService {
     public void broadcast() {
         if (broadcast.get()) {
             destinations.forEach(destination -> {
+                // тут хэндлится маркет дата
+                // для непропушенных - раз в секунду или при обновлении из grpc
+
                 String message = "Message motherfucker!";
                 brokerMessagingTemplate.convertAndSend(destination, message);
             });
